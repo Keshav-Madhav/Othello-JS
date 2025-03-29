@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Othello</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="game-container">
+    <h1 class="game-title">Othello</h1>
+    <div class="othello-board">
+      <!-- Column labels A-H at the top -->
+      <div class="column-labels">
+        <div class="column-label">A</div>
+        <div class="column-label">B</div>
+        <div class="column-label">C</div>
+        <div class="column-label">D</div>
+        <div class="column-label">E</div>
+        <div class="column-label">F</div>
+        <div class="column-label">G</div>
+        <div class="column-label">H</div>
+      </div>
+      
+      <!-- Row labels 1-8 on the left -->
+      <div class="row-labels-left">
+        <div class="row-label">1</div>
+        <div class="row-label">2</div>
+        <div class="row-label">3</div>
+        <div class="row-label">4</div>
+        <div class="row-label">5</div>
+        <div class="row-label">6</div>
+        <div class="row-label">7</div>
+        <div class="row-label">8</div>
+      </div>
+      
+      <!-- Row labels 1-8 on the right -->
+      <div class="row-labels-right">
+        <div class="row-label">1</div>
+        <div class="row-label">2</div>
+        <div class="row-label">3</div>
+        <div class="row-label">4</div>
+        <div class="row-label">5</div>
+        <div class="row-label">6</div>
+        <div class="row-label">7</div>
+        <div class="row-label">8</div>
+      </div>
+      
+      <!-- Row 1 -->
+      <div class="square" data-row="0" data-col="0"></div>
+      <div class="square" data-row="0" data-col="1"></div>
+      <div class="square" data-row="0" data-col="2"></div>
+      <div class="square" data-row="0" data-col="3"></div>
+      <div class="square" data-row="0" data-col="4"></div>
+      <div class="square" data-row="0" data-col="5"></div>
+      <div class="square" data-row="0" data-col="6"></div>
+      <div class="square" data-row="0" data-col="7"></div>
+      
+      <!-- Row 2 -->
+      <div class="square" data-row="1" data-col="0"></div>
+      <div class="square" data-row="1" data-col="1"></div>
+      <div class="square" data-row="1" data-col="2"></div>
+      <div class="square" data-row="1" data-col="3"></div>
+      <div class="square" data-row="1" data-col="4"></div>
+      <div class="square" data-row="1" data-col="5"></div>
+      <div class="square" data-row="1" data-col="6"></div>
+      <div class="square" data-row="1" data-col="7"></div>
+      
+      <!-- Row 3 -->
+      <div class="square" data-row="2" data-col="0"></div>
+      <div class="square" data-row="2" data-col="1"></div>
+      <div class="square" data-row="2" data-col="2"></div>
+      <div class="square" data-row="2" data-col="3"></div>
+      <div class="square" data-row="2" data-col="4"></div>
+      <div class="square" data-row="2" data-col="5"></div>
+      <div class="square" data-row="2" data-col="6"></div>
+      <div class="square" data-row="2" data-col="7"></div>
+      
+      <!-- Row 4 -->
+      <div class="square" data-row="3" data-col="0"></div>
+      <div class="square" data-row="3" data-col="1"></div>
+      <div class="square" data-row="3" data-col="2"></div>
+      <div class="square" data-row="3" data-col="3">
+        <div class="disc white"></div>
+      </div>
+      <div class="square" data-row="3" data-col="4">
+        <div class="disc black"></div>
+      </div>
+      <div class="square" data-row="3" data-col="5"></div>
+      <div class="square" data-row="3" data-col="6"></div>
+      <div class="square" data-row="3" data-col="7"></div>
+      
+      <!-- Row 5 -->
+      <div class="square" data-row="4" data-col="0"></div>
+      <div class="square" data-row="4" data-col="1"></div>
+      <div class="square" data-row="4" data-col="2"></div>
+      <div class="square" data-row="4" data-col="3">
+        <div class="disc black"></div>
+      </div>
+      <div class="square" data-row="4" data-col="4">
+        <div class="disc white"></div>
+      </div>
+      <div class="square" data-row="4" data-col="5"></div>
+      <div class="square" data-row="4" data-col="6"></div>
+      <div class="square" data-row="4" data-col="7"></div>
+      
+      <!-- Row 6 -->
+      <div class="square" data-row="5" data-col="0"></div>
+      <div class="square" data-row="5" data-col="1"></div>
+      <div class="square" data-row="5" data-col="2"></div>
+      <div class="square" data-row="5" data-col="3"></div>
+      <div class="square" data-row="5" data-col="4"></div>
+      <div class="square" data-row="5" data-col="5"></div>
+      <div class="square" data-row="5" data-col="6"></div>
+      <div class="square" data-row="5" data-col="7"></div>
+      
+      <!-- Row 7 -->
+      <div class="square" data-row="6" data-col="0"></div>
+      <div class="square" data-row="6" data-col="1"></div>
+      <div class="square" data-row="6" data-col="2"></div>
+      <div class="square" data-row="6" data-col="3"></div>
+      <div class="square" data-row="6" data-col="4"></div>
+      <div class="square" data-row="6" data-col="5"></div>
+      <div class="square" data-row="6" data-col="6"></div>
+      <div class="square" data-row="6" data-col="7"></div>
+      
+      <!-- Row 8 -->
+      <div class="square" data-row="7" data-col="0"></div>
+      <div class="square" data-row="7" data-col="1"></div>
+      <div class="square" data-row="7" data-col="2"></div>
+      <div class="square" data-row="7" data-col="3"></div>
+      <div class="square" data-row="7" data-col="4"></div>
+      <div class="square" data-row="7" data-col="5"></div>
+      <div class="square" data-row="7" data-col="6"></div>
+      <div class="square" data-row="7" data-col="7"></div>
+    </div>
+    
+    <div class="status-bar">
+      <div class="player-score">
+        <div class="score-disc black"></div>
+        <span id="black-score">2</span>
+      </div>
+      <div id="turn-indicator">Black's turn</div>
+      <div class="player-score">
+        <div class="score-disc white"></div>
+        <span id="white-score">2</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="othello.js"></script>
+</body>
+</html>
