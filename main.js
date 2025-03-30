@@ -57,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initializeBoardFromDOM();
   setupEventListeners();
+  checkUrlForMatchId();
 
   function initializeBoardFromDOM() {
     squares.forEach(square => {
@@ -193,9 +194,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function checkUrlForMatchId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('match_id');
+    
+    if (matchId) {
+      console.log(`Found match_id in URL: ${matchId}`);
+      roomIdInput.value = matchId;
+      createGameBtn.disabled = true;
+      joinGameBtn.disabled = true;
+      aiControls.classList.add('hidden');
+      joinRoomContainer.classList.remove('hidden');
+      
+      // Attempt to connect automatically
+      handleConnect();
+    }
+  }
+
   function copyRoomId() {
     const roomId = roomIdText.textContent;
-    navigator.clipboard.writeText(roomId)
+    navigator.clipboard.writeText(`https://keshav-madhav.github.io/Othello-JS?match_id=${roomId}`)
       .then(() => {
         updateStatus("Room ID copied to clipboard!");
       })
