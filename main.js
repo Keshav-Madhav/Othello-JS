@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let gameConnection = null;
   let localPlayer = null;
   let isConnected = false;
+  let isComputerGame = false;
+  let computerDifficulty = 1; // 1: easy, 2: medium, 3: hard
 
   // Cache DOM elements
   const squares = document.querySelectorAll('.square');
@@ -27,6 +29,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Connection panel elements
   const createGameBtn = document.getElementById('create-game-btn');
   const joinGameBtn = document.getElementById('join-game-btn');
+  const playComputerEasy = document.getElementById('play-computer-easy');
+  const playComputerMedium = document.getElementById('play-computer-medium');
+  const playComputerHard = document.getElementById('play-computer-hard');
   const roomIdContainer = document.getElementById('room-id-container');
   const roomIdText = document.getElementById('room-id-text');
   const copyRoomIdBtn = document.getElementById('copy-room-id');
@@ -69,6 +74,18 @@ document.addEventListener("DOMContentLoaded", () => {
     connectBtn.addEventListener('click', handleConnect);
     copyRoomIdBtn.addEventListener('click', copyRoomId);
     newGameBtn.addEventListener('click', resetGame);
+    playComputerEasy.addEventListener('click', () => {
+      computerDifficulty = 1;
+      handlePlayComputer();
+    });
+    playComputerMedium.addEventListener('click', () => {
+      computerDifficulty = 2;
+      handlePlayComputer();
+    });
+    playComputerHard.addEventListener('click', () => {
+      computerDifficulty = 3;
+      handlePlayComputer();
+    });
   }
 
   async function handleCreateGame() {
@@ -104,6 +121,27 @@ document.addEventListener("DOMContentLoaded", () => {
       createGameBtn.disabled = false;
       joinGameBtn.disabled = false;
     }
+  }
+
+  function handlePlayComputer() {
+    console.log("Starting game against computer...");
+    createGameBtn.disabled = true;
+    joinGameBtn.disabled = true;
+    playComputerEasy.disabled = true;
+    playComputerMedium.disabled = true;
+    playComputerHard.disabled = true;
+    
+    isComputerGame = true;
+    localPlayer = PLAYER.BLACK;
+    isConnected = true;
+    
+    connectionPanel.classList.add('hidden');
+    PlayerColorDisplay.classList.remove('hidden');
+    playerDisc.className = 'black';
+    
+    renderBoard();
+    highlightValidMoves();
+    updateStatus("Game against computer started. You are Black.");
   }
 
   function handleJoinGame() {
@@ -175,14 +213,95 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     
-    if (currentPlayer !== localPlayer) {
+    if (currentPlayer !== localPlayer && !isComputerGame) {
       return;
     }
 
     if (isValidMove(row, col, currentPlayer)) {
       makeMove(row, col);
-      gameConnection.sendData({ type: 'move', board, currentPlayer });
+      
+      if (isComputerGame) {
+        setTimeout(() => {
+          if (currentPlayer !== localPlayer && !checkGameOver()) {
+            makeComputerMove();
+          }
+        }, 500);
+      } else {
+        // For multiplayer games, send the move to the opponent
+        gameConnection.sendData({ type: 'move', board, currentPlayer });
+      }
     }
+  }
+
+  function makeComputerMove() {
+    const validMoves = getValidMoves(currentPlayer);
+    if (validMoves.length === 0) {
+      switchTurn();
+      return;
+    }
+
+    // Simple AI - choose random move for easy difficulty
+    let chosenMove;
+    if (computerDifficulty === 1) {
+      // Easy - random move
+      chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+    } else if (computerDifficulty === 2) {
+      // Medium - prefers corners and edges
+      const cornerMoves = validMoves.filter(([r, c]) => 
+        (r === 0 || r === 7) && (c === 0 || c === 7)
+      );
+      const edgeMoves = validMoves.filter(([r, c]) => 
+        (r === 0 || r === 7 || c === 0 || c === 7) && 
+        !cornerMoves.some(([cr, cc]) => cr === r && cc === c)
+      );
+      
+      if (cornerMoves.length > 0) {
+        chosenMove = cornerMoves[Math.floor(Math.random() * cornerMoves.length)];
+      } else if (edgeMoves.length > 0) {
+        chosenMove = edgeMoves[Math.floor(Math.random() * edgeMoves.length)];
+      } else {
+        chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+      }
+    } else {
+      // Hard - chooses move that flips the most discs
+      let maxFlips = -1;
+      for (const move of validMoves) {
+        const flips = countFlips(move[0], move[1], currentPlayer);
+        if (flips > maxFlips) {
+          maxFlips = flips;
+          chosenMove = move;
+        }
+      }
+    }
+
+    makeMove(chosenMove[0], chosenMove[1]);
+  }
+
+  function countFlips(row, col, player) {
+    let totalFlips = 0;
+    const directions = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1],  [1, 0],  [1, 1]
+    ];
+    
+    for (const [dx, dy] of directions) {
+      let r = row + dx;
+      let c = col + dy;
+      let discsToFlip = [];
+      
+      while (isInBounds(r, c) && board[r][c] !== null && board[r][c] !== player) {
+        discsToFlip.push([r, c]);
+        r += dx;
+        c += dy;
+      }
+      
+      if (isInBounds(r, c) && board[r][c] === player) {
+        totalFlips += discsToFlip.length;
+      }
+    }
+    
+    return totalFlips;
   }
 
   function checkTurn() {
@@ -391,14 +510,18 @@ document.addEventListener("DOMContentLoaded", () => {
     joinRoomContainer.classList.add('hidden');
     createGameBtn.disabled = false;
     joinGameBtn.disabled = false;
+    playComputerEasy.disabled = false;
+    playComputerMedium.disabled = false;
+    playComputerHard.disabled = false;
     connectBtn.disabled = false;
     statusMessage.textContent = "";
     statusMessage.classList.remove('error');
     PlayerColorDisplay.classList.add('hidden');
     playerDisc.className = 'disc';
     
-    // Reset connection status
+    // Reset game state
     isConnected = false;
+    isComputerGame = false;
     gameConnection = null;
     
     // Render the board
