@@ -7,6 +7,26 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="connection-panel">
+    <h2>Connect to Play</h2>
+    <div class="connection-controls">
+      <button id="create-game-btn" class="wooden-btn">Create Game</button>
+      <button id="join-game-btn" class="wooden-btn">Join Game</button>
+    </div>
+    <div id="room-id-container" class="room-info hidden">
+      <p>Share this room ID with your opponent:</p>
+      <div class="room-id-display">
+        <span id="room-id-text"></span>
+        <button id="copy-room-id" class="icon-btn">Copy</button>
+      </div>
+    </div>
+    <div id="join-room-container" class="join-form hidden">
+      <input type="text" id="room-id-input" placeholder="Enter room ID" class="room-id-input">
+      <button id="connect-btn" class="wooden-btn">Connect</button>
+    </div>
+    <div id="status-message" class="status-message"></div>
+  </div>
+
   <div class="game-container">
     <h1 class="game-title">Othello</h1>
     <div class="othello-board">
@@ -145,6 +165,25 @@
         <div class="score-disc white"></div>
         <span id="white-score">2</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Game over modal dialog -->
+  <div id="game-over-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Game Over</h2>
+      <div class="final-score">
+        <div class="player-score">
+          <div class="score-disc black"></div>
+          <span id="final-black-score">0</span>
+        </div>
+        <div class="player-score">
+          <div class="score-disc white"></div>
+          <span id="final-white-score">0</span>
+        </div>
+      </div>
+      <p id="winner-text">Black wins!</p>
+      <button id="new-game-btn" class="wooden-btn">New Game</button>
     </div>
   </div>
 

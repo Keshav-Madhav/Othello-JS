@@ -14,37 +14,30 @@ document.addEventListener("DOMContentLoaded", () => {
   let isConnected = false;
 
   // Cache DOM elements
-  const gameContainer = document.querySelector('.game-container');
   const squares = document.querySelectorAll('.square');
   const blackScoreElement = document.getElementById('black-score');
   const whiteScoreElement = document.getElementById('white-score');
   const turnIndicatorElement = document.getElementById('turn-indicator');
-
-  const menu = createGameMenu();
-  document.body.insertBefore(menu, gameContainer);
+  const gameOverModal = document.getElementById('game-over-modal');
+  const finalBlackScore = document.getElementById('final-black-score');
+  const finalWhiteScore = document.getElementById('final-white-score');
+  const winnerText = document.getElementById('winner-text');
+  const newGameBtn = document.getElementById('new-game-btn');
+  
+  // Connection panel elements
+  const createGameBtn = document.getElementById('create-game-btn');
+  const joinGameBtn = document.getElementById('join-game-btn');
+  const roomIdContainer = document.getElementById('room-id-container');
+  const roomIdText = document.getElementById('room-id-text');
+  const copyRoomIdBtn = document.getElementById('copy-room-id');
+  const joinRoomContainer = document.getElementById('join-room-container');
+  const roomIdInput = document.getElementById('room-id-input');
+  const connectBtn = document.getElementById('connect-btn');
+  const statusMessage = document.getElementById('status-message');
+  const connectionPanel = document.querySelector('.connection-panel');
 
   initializeBoardFromDOM();
   setupEventListeners();
-
-  function createGameMenu() {
-    const menu = document.createElement('div');
-    menu.style.margin = '20px';
-    
-    const createBtn = document.createElement('button');
-    createBtn.textContent = 'Create Game';
-    createBtn.style.marginRight = '10px';
-    
-    const joinBtn = document.createElement('button');
-    joinBtn.textContent = 'Join Game';
-    
-    menu.appendChild(createBtn);
-    menu.appendChild(joinBtn);
-    
-    createBtn.addEventListener('click', handleCreateGame);
-    joinBtn.addEventListener('click', handleJoinGame);
-    
-    return menu;
-  }
 
   function initializeBoardFromDOM() {
     squares.forEach(square => {
@@ -58,10 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /**
-   * Set up event listeners for game squares
-   */
   function setupEventListeners() {
+    // Game board event listeners
     squares.forEach(square => {
       square.addEventListener('click', () => {
         const row = parseInt(square.dataset.row);
@@ -69,35 +60,64 @@ document.addEventListener("DOMContentLoaded", () => {
         handleMoveAttempt(row, col);
       });
     });
+
+    // Connection panel event listeners
+    createGameBtn.addEventListener('click', handleCreateGame);
+    joinGameBtn.addEventListener('click', handleJoinGame);
+    connectBtn.addEventListener('click', handleConnect);
+    copyRoomIdBtn.addEventListener('click', copyRoomId);
+    newGameBtn.addEventListener('click', resetGame);
   }
 
   async function handleCreateGame() {
+    console.log("Creating game...");
+    createGameBtn.disabled = true;
+    joinGameBtn.disabled = true;
+    updateStatus("Creating game...");
+    
     try {
       gameConnection = new GameConnection();
       await gameConnection.initialize();
       const roomId = await gameConnection.createRoom();
       localPlayer = PLAYER.BLACK;
       
-      alert(`Room created! Share this ID with your opponent: ${roomId}`);
+      roomIdText.textContent = roomId;
+      roomIdContainer.classList.remove('hidden');
+      updateStatus("Waiting for opponent to join...");
       
       gameConnection.onOpponentConnected = () => {
         isConnected = true;
-        menu.style.display = 'none';
+        connectionPanel.classList.add('hidden');
         gameConnection.sendData({ type: 'init', board, currentPlayer });
         renderBoard();
         highlightValidMoves();
+        updateStatus("Opponent connected! Game started.");
       };
 
       gameConnection.onDataReceived = handleNetworkData;
     } catch (error) {
-      alert('Error creating room: ' + error.message);
+      updateStatus(`Error creating room: ${error.message}`, true);
+      createGameBtn.disabled = false;
+      joinGameBtn.disabled = false;
     }
   }
 
-  async function handleJoinGame() {
-    const roomId = prompt('Enter room ID:');
-    if (!roomId) return;
+  function handleJoinGame() {
+    createGameBtn.disabled = true;
+    joinGameBtn.disabled = true;
+    joinRoomContainer.classList.remove('hidden');
+  }
 
+  async function handleConnect() {
+    const roomId = roomIdInput.value.trim();
+    if (!roomId) {
+      updateStatus("Please enter a room ID", true);
+      return;
+    }
+
+    updateStatus("Connecting to game...");
+    connectBtn.disabled = true;
+    
     try {
       gameConnection = new GameConnection();
       await gameConnection.initialize();
@@ -105,13 +125,30 @@ document.addEventListener("DOMContentLoaded", () => {
       
       localPlayer = PLAYER.WHITE;
       isConnected = true;
-      menu.style.display = 'none';
+      connectionPanel.classList.add('hidden');
       
       gameConnection.onDataReceived = handleNetworkData;
-      alert('Joined room. Waiting for game start...');
+      updateStatus("Connected! Waiting for game data...");
     } catch (error) {
-      alert('Error joining room: ' + error.message);
+      updateStatus(`Error joining room: ${error.message}`, true);
+      connectBtn.disabled = false;
     }
+  }
+
+  function copyRoomId() {
+    const roomId = roomIdText.textContent;
+    navigator.clipboard.writeText(roomId)
+      .then(() => {
+        updateStatus("Room ID copied to clipboard!");
+      })
+      .catch(err => {
+        updateStatus("Failed to copy room ID", true);
+      });
+  }
+
+  function updateStatus(message, isError = false) {
+    statusMessage.textContent = message;
+    statusMessage.classList.toggle('error', isError);
   }
 
   function handleNetworkData(data) {
@@ -128,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleMoveAttempt(row, col) {
     if (!isConnected) {
-      alert('Not connected to opponent!');
+      updateStatus("Not connected to opponent!", true);
       return;
     }
     
@@ -189,13 +226,25 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateStatusBar() {
-    const blackCount = document.querySelectorAll('.disc.black').length;
-    const whiteCount = document.querySelectorAll('.disc.white').length;
+    const blackCount = countDiscs(PLAYER.BLACK);
+    const whiteCount = countDiscs(PLAYER.WHITE);
 
     blackScoreElement.textContent = blackCount;
     whiteScoreElement.textContent = whiteCount;
     turnIndicatorElement.textContent = 
       currentPlayer === PLAYER.BLACK ? "Black's turn" : "White's turn";
+  }
+
+  function countDiscs(player) {
+    let count = 0;
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        if (board[row][col] === player) {
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   function isValidMove(row, col, player) {
@@ -296,19 +345,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function endGame() {
-    const blackCount = document.querySelectorAll('.disc.black').length;
-    const whiteCount = document.querySelectorAll('.disc.white').length;
+    const blackCount = countDiscs(PLAYER.BLACK);
+    const whiteCount = countDiscs(PLAYER.WHITE);
     
-    let message = `Game Over!\nBlack: ${blackCount}, White: ${whiteCount}\n`;
+    finalBlackScore.textContent = blackCount;
+    finalWhiteScore.textContent = whiteCount;
     
     if (blackCount > whiteCount) {
-      message += "Black wins!";
+      winnerText.textContent = "Black wins!";
     } else if (whiteCount > blackCount) {
-      message += "White wins!";
+      winnerText.textContent = "White wins!";
     } else {
-      message += "It's a tie!";
+      winnerText.textContent = "It's a tie!";
     }
     
-    alert(message);
+    gameOverModal.classList.remove('hidden');
+  }
+
+  function resetGame() {
+    // Reset the board to initial state
+    board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
+    board[3][3] = PLAYER.WHITE;
+    board[3][4] = PLAYER.BLACK;
+    board[4][3] = PLAYER.BLACK;
+    board[4][4] = PLAYER.WHITE;
+    
+    currentPlayer = PLAYER.BLACK;
+    
+    // Hide the game over modal
+    gameOverModal.classList.add('hidden');
+    
+    // Reset connection panel
+    connectionPanel.classList.remove('hidden');
+    roomIdContainer.classList.add('hidden');
+    joinRoomContainer.classList.add('hidden');
+    createGameBtn.disabled = false;
+    joinGameBtn.disabled = false;
+    connectBtn.disabled = false;
+    statusMessage.textContent = "";
+    
+    // Reset connection status
+    isConnected = false;
+    gameConnection = null;
+    
+    // Render the board
+    renderBoard();
   }
 });
