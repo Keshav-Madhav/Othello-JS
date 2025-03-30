@@ -35,6 +35,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const connectBtn = document.getElementById('connect-btn');
   const statusMessage = document.getElementById('status-message');
   const connectionPanel = document.querySelector('.connection-panel');
+  const PlayerColorDisplay = document.getElementById('player-color-display');
+  const playerDisc = document.getElementById('player-disc');
 
   initializeBoardFromDOM();
   setupEventListeners();
@@ -88,6 +90,8 @@ document.addEventListener("DOMContentLoaded", () => {
       gameConnection.onOpponentConnected = () => {
         isConnected = true;
         connectionPanel.classList.add('hidden');
+        PlayerColorDisplay.classList.remove('hidden');
+        playerDisc.className = 'black';
         gameConnection.sendData({ type: 'init', board, currentPlayer });
         renderBoard();
         highlightValidMoves();
@@ -126,6 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
       localPlayer = PLAYER.WHITE;
       isConnected = true;
       connectionPanel.classList.add('hidden');
+      PlayerColorDisplay.classList.remove('hidden');
+      playerDisc.className = 'white';
       
       gameConnection.onDataReceived = handleNetworkData;
       updateStatus("Connected! Waiting for game data...");
@@ -328,6 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     switchTurn();
     renderBoard();
+    checkTurn();
   }
 
   function switchTurn() {
@@ -342,6 +349,9 @@ document.addEventListener("DOMContentLoaded", () => {
         endGame();
       }
     }
+
+    renderBoard();
+    checkTurn();
   }
 
   function endGame() {
@@ -383,6 +393,9 @@ document.addEventListener("DOMContentLoaded", () => {
     joinGameBtn.disabled = false;
     connectBtn.disabled = false;
     statusMessage.textContent = "";
+    statusMessage.classList.remove('error');
+    PlayerColorDisplay.classList.add('hidden');
+    playerDisc.className = 'disc';
     
     // Reset connection status
     isConnected = false;
