@@ -3,8 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Othello</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Play Othello (Reversi) online with friends or against AI opponents of varying difficulty levels.">
+  <meta name="keywords" content="Othello, Reversi, board game, strategy game, online multiplayer, AI opponent">
+  <meta name="author" content="Your Name">
+  
+  <!-- Open Graph meta tags for social sharing -->
+  <meta property="og:title" content="Othello - Play Online">
+  <meta property="og:description" content="Challenge friends or AI in the classic strategy board game Othello (Reversi).">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://keshav-madhav.github.io/Othello-JS/">
+  <meta property="og:image" content="./images/othello-preview.png">
+  
+  <!-- Twitter Card meta tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Othello - Play Online">
+  <meta name="twitter:description" content="Challenge friends or AI in the classic strategy board game Othello (Reversi).">
+  <meta name="twitter:image" content="./images/othello-preview.png">
+  
+  <!-- Theme color for browser UI -->
+  <meta name="theme-color" content="#1b5e20">
+  
+  <title>Othello - Classic Strategy Board Game</title>
+  
+  <!-- Favicon and app icons -->
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="./favicon.png">
+  
+  <!-- Web app manifest for PWA support -->
+  <link rel="manifest" href="./manifest.json">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="styles.css" as="style">
+  <link rel="preload" href="./main.js" as="script">
+  
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="styles.css">
+  
+  <!-- Preconnect to external domains -->
+  <link rel="preconnect" href="https://unpkg.com">
 </head>
 <body>
   <div class="connection-panel">
@@ -25,184 +63,225 @@
       <p>Share this room ID with your opponent:</p>
       <div class="room-id-display">
         <span id="room-id-text"></span>
-        <button id="copy-room-id" class="icon-btn">Copy</button>
+        <button id="copy-room-id" class="icon-btn" aria-label="Copy room ID">Copy</button>
       </div>
     </div>
     <div id="join-room-container" class="join-form hidden">
-      <input type="text" id="room-id-input" placeholder="Enter room ID" class="room-id-input">
+      <input type="text" id="room-id-input" placeholder="Enter room ID" class="room-id-input" aria-label="Enter room ID">
       <button id="connect-btn" class="wooden-btn">Connect</button>
     </div>
-    <div id="status-message" class="status-message"></div>
+    <div id="status-message" class="status-message" aria-live="polite"></div>
   </div>
 
   <div id="player-color-display" class="player-color-display hidden">
     <p>You are playing as:</p>
     <div class="player-disc-display">
-      <div id="player-disc" class="disc"></div>
+      <div id="player-disc" class="disc" aria-label="Your player disc"></div>
     </div>
   </div>
 
-  <div class="game-container">
+  <main class="game-container">
     <h1 class="game-title">Othello</h1>
-    <div class="othello-board">
+    <div class="othello-board" role="grid" aria-label="Othello game board">
       <!-- Column labels A-H at the top -->
-      <div class="column-labels">
-        <div class="column-label">A</div>
-        <div class="column-label">B</div>
-        <div class="column-label">C</div>
-        <div class="column-label">D</div>
-        <div class="column-label">E</div>
-        <div class="column-label">F</div>
-        <div class="column-label">G</div>
-        <div class="column-label">H</div>
+      <div class="column-labels" role="row">
+        <div class="column-label" role="columnheader">A</div>
+        <div class="column-label" role="columnheader">B</div>
+        <div class="column-label" role="columnheader">C</div>
+        <div class="column-label" role="columnheader">D</div>
+        <div class="column-label" role="columnheader">E</div>
+        <div class="column-label" role="columnheader">F</div>
+        <div class="column-label" role="columnheader">G</div>
+        <div class="column-label" role="columnheader">H</div>
       </div>
       
       <!-- Row labels 1-8 on the left -->
       <div class="row-labels-left">
-        <div class="row-label">1</div>
-        <div class="row-label">2</div>
-        <div class="row-label">3</div>
-        <div class="row-label">4</div>
-        <div class="row-label">5</div>
-        <div class="row-label">6</div>
-        <div class="row-label">7</div>
-        <div class="row-label">8</div>
+        <div class="row-label" role="rowheader">1</div>
+        <div class="row-label" role="rowheader">2</div>
+        <div class="row-label" role="rowheader">3</div>
+        <div class="row-label" role="rowheader">4</div>
+        <div class="row-label" role="rowheader">5</div>
+        <div class="row-label" role="rowheader">6</div>
+        <div class="row-label" role="rowheader">7</div>
+        <div class="row-label" role="rowheader">8</div>
       </div>
       
       <!-- Row labels 1-8 on the right -->
       <div class="row-labels-right">
-        <div class="row-label">1</div>
-        <div class="row-label">2</div>
-        <div class="row-label">3</div>
-        <div class="row-label">4</div>
-        <div class="row-label">5</div>
-        <div class="row-label">6</div>
-        <div class="row-label">7</div>
-        <div class="row-label">8</div>
+        <div class="row-label" role="rowheader">1</div>
+        <div class="row-label" role="rowheader">2</div>
+        <div class="row-label" role="rowheader">3</div>
+        <div class="row-label" role="rowheader">4</div>
+        <div class="row-label" role="rowheader">5</div>
+        <div class="row-label" role="rowheader">6</div>
+        <div class="row-label" role="rowheader">7</div>
+        <div class="row-label" role="rowheader">8</div>
       </div>
       
       <!-- Row 1 -->
-      <div class="square" data-row="0" data-col="0"></div>
-      <div class="square" data-row="0" data-col="1"></div>
-      <div class="square" data-row="0" data-col="2"></div>
-      <div class="square" data-row="0" data-col="3"></div>
-      <div class="square" data-row="0" data-col="4"></div>
-      <div class="square" data-row="0" data-col="5"></div>
-      <div class="square" data-row="0" data-col="6"></div>
-      <div class="square" data-row="0" data-col="7"></div>
+      <div class="square" data-row="0" data-col="0" role="gridcell" aria-label="A1" tabindex="0"></div>
+      <div class="square" data-row="0" data-col="1" role="gridcell" aria-label="B1" tabindex="0"></div>
+      <div class="square" data-row="0" data-col="2" role="gridcell" aria-label="C1" tabindex="0"></div>
+      <div class="square" data-row="0" data-col="3" role="gridcell" aria-label="D1" tabindex="0"></div>
+      <div class="square" data-row="0" data-col="4" role="gridcell" aria-label="E1" tabindex="0"></div>
+      <div class="square" data-row="0" data-col="5" role="gridcell" aria-label="F1" tabindex="0"></div>
+      <div class="square" data-row="0" data-col="6" role="gridcell" aria-label="G1" tabindex="0"></div>
+      <div class="square" data-row="0" data-col="7" role="gridcell" aria-label="H1" tabindex="0"></div>
       
       <!-- Row 2 -->
-      <div class="square" data-row="1" data-col="0"></div>
-      <div class="square" data-row="1" data-col="1"></div>
-      <div class="square" data-row="1" data-col="2"></div>
-      <div class="square" data-row="1" data-col="3"></div>
-      <div class="square" data-row="1" data-col="4"></div>
-      <div class="square" data-row="1" data-col="5"></div>
-      <div class="square" data-row="1" data-col="6"></div>
-      <div class="square" data-row="1" data-col="7"></div>
+      <div class="square" data-row="1" data-col="0" role="gridcell" aria-label="A2" tabindex="0"></div>
+      <div class="square" data-row="1" data-col="1" role="gridcell" aria-label="B2" tabindex="0"></div>
+      <div class="square" data-row="1" data-col="2" role="gridcell" aria-label="C2" tabindex="0"></div>
+      <div class="square" data-row="1" data-col="3" role="gridcell" aria-label="D2" tabindex="0"></div>
+      <div class="square" data-row="1" data-col="4" role="gridcell" aria-label="E2" tabindex="0"></div>
+      <div class="square" data-row="1" data-col="5" role="gridcell" aria-label="F2" tabindex="0"></div>
+      <div class="square" data-row="1" data-col="6" role="gridcell" aria-label="G2" tabindex="0"></div>
+      <div class="square" data-row="1" data-col="7" role="gridcell" aria-label="H2" tabindex="0"></div>
       
       <!-- Row 3 -->
-      <div class="square" data-row="2" data-col="0"></div>
-      <div class="square" data-row="2" data-col="1"></div>
-      <div class="square" data-row="2" data-col="2"></div>
-      <div class="square" data-row="2" data-col="3"></div>
-      <div class="square" data-row="2" data-col="4"></div>
-      <div class="square" data-row="2" data-col="5"></div>
-      <div class="square" data-row="2" data-col="6"></div>
-      <div class="square" data-row="2" data-col="7"></div>
+      <div class="square" data-row="2" data-col="0" role="gridcell" aria-label="A3" tabindex="0"></div>
+      <div class="square" data-row="2" data-col="1" role="gridcell" aria-label="B3" tabindex="0"></div>
+      <div class="square" data-row="2" data-col="2" role="gridcell" aria-label="C3" tabindex="0"></div>
+      <div class="square" data-row="2" data-col="3" role="gridcell" aria-label="D3" tabindex="0"></div>
+      <div class="square" data-row="2" data-col="4" role="gridcell" aria-label="E3" tabindex="0"></div>
+      <div class="square" data-row="2" data-col="5" role="gridcell" aria-label="F3" tabindex="0"></div>
+      <div class="square" data-row="2" data-col="6" role="gridcell" aria-label="G3" tabindex="0"></div>
+      <div class="square" data-row="2" data-col="7" role="gridcell" aria-label="H3" tabindex="0"></div>
       
       <!-- Row 4 -->
-      <div class="square" data-row="3" data-col="0"></div>
-      <div class="square" data-row="3" data-col="1"></div>
-      <div class="square" data-row="3" data-col="2"></div>
-      <div class="square" data-row="3" data-col="3">
-        <div class="disc white"></div>
+      <div class="square" data-row="3" data-col="0" role="gridcell" aria-label="A4" tabindex="0"></div>
+      <div class="square" data-row="3" data-col="1" role="gridcell" aria-label="B4" tabindex="0"></div>
+      <div class="square" data-row="3" data-col="2" role="gridcell" aria-label="C4" tabindex="0"></div>
+      <div class="square" data-row="3" data-col="3" role="gridcell" aria-label="D4 contains white disc" tabindex="0">
+        <div class="disc white" aria-label="White disc"></div>
       </div>
-      <div class="square" data-row="3" data-col="4">
-        <div class="disc black"></div>
+      <div class="square" data-row="3" data-col="4" role="gridcell" aria-label="E4 contains black disc" tabindex="0">
+        <div class="disc black" aria-label="Black disc"></div>
       </div>
-      <div class="square" data-row="3" data-col="5"></div>
-      <div class="square" data-row="3" data-col="6"></div>
-      <div class="square" data-row="3" data-col="7"></div>
+      <div class="square" data-row="3" data-col="5" role="gridcell" aria-label="F4" tabindex="0"></div>
+      <div class="square" data-row="3" data-col="6" role="gridcell" aria-label="G4" tabindex="0"></div>
+      <div class="square" data-row="3" data-col="7" role="gridcell" aria-label="H4" tabindex="0"></div>
       
       <!-- Row 5 -->
-      <div class="square" data-row="4" data-col="0"></div>
-      <div class="square" data-row="4" data-col="1"></div>
-      <div class="square" data-row="4" data-col="2"></div>
-      <div class="square" data-row="4" data-col="3">
-        <div class="disc black"></div>
+      <div class="square" data-row="4" data-col="0" role="gridcell" aria-label="A5" tabindex="0"></div>
+      <div class="square" data-row="4" data-col="1" role="gridcell" aria-label="B5" tabindex="0"></div>
+      <div class="square" data-row="4" data-col="2" role="gridcell" aria-label="C5" tabindex="0"></div>
+      <div class="square" data-row="4" data-col="3" role="gridcell" aria-label="D5 contains black disc" tabindex="0">
+        <div class="disc black" aria-label="Black disc"></div>
       </div>
-      <div class="square" data-row="4" data-col="4">
-        <div class="disc white"></div>
+      <div class="square" data-row="4" data-col="4" role="gridcell" aria-label="E5 contains white disc" tabindex="0">
+        <div class="disc white" aria-label="White disc"></div>
       </div>
-      <div class="square" data-row="4" data-col="5"></div>
-      <div class="square" data-row="4" data-col="6"></div>
-      <div class="square" data-row="4" data-col="7"></div>
+      <div class="square" data-row="4" data-col="5" role="gridcell" aria-label="F5" tabindex="0"></div>
+      <div class="square" data-row="4" data-col="6" role="gridcell" aria-label="G5" tabindex="0"></div>
+      <div class="square" data-row="4" data-col="7" role="gridcell" aria-label="H5" tabindex="0"></div>
       
       <!-- Row 6 -->
-      <div class="square" data-row="5" data-col="0"></div>
-      <div class="square" data-row="5" data-col="1"></div>
-      <div class="square" data-row="5" data-col="2"></div>
-      <div class="square" data-row="5" data-col="3"></div>
-      <div class="square" data-row="5" data-col="4"></div>
-      <div class="square" data-row="5" data-col="5"></div>
-      <div class="square" data-row="5" data-col="6"></div>
-      <div class="square" data-row="5" data-col="7"></div>
+      <div class="square" data-row="5" data-col="0" role="gridcell" aria-label="A6" tabindex="0"></div>
+      <div class="square" data-row="5" data-col="1" role="gridcell" aria-label="B6" tabindex="0"></div>
+      <div class="square" data-row="5" data-col="2" role="gridcell" aria-label="C6" tabindex="0"></div>
+      <div class="square" data-row="5" data-col="3" role="gridcell" aria-label="D6" tabindex="0"></div>
+      <div class="square" data-row="5" data-col="4" role="gridcell" aria-label="E6" tabindex="0"></div>
+      <div class="square" data-row="5" data-col="5" role="gridcell" aria-label="F6" tabindex="0"></div>
+      <div class="square" data-row="5" data-col="6" role="gridcell" aria-label="G6" tabindex="0"></div>
+      <div class="square" data-row="5" data-col="7" role="gridcell" aria-label="H6" tabindex="0"></div>
       
       <!-- Row 7 -->
-      <div class="square" data-row="6" data-col="0"></div>
-      <div class="square" data-row="6" data-col="1"></div>
-      <div class="square" data-row="6" data-col="2"></div>
-      <div class="square" data-row="6" data-col="3"></div>
-      <div class="square" data-row="6" data-col="4"></div>
-      <div class="square" data-row="6" data-col="5"></div>
-      <div class="square" data-row="6" data-col="6"></div>
-      <div class="square" data-row="6" data-col="7"></div>
+      <div class="square" data-row="6" data-col="0" role="gridcell" aria-label="A7" tabindex="0"></div>
+      <div class="square" data-row="6" data-col="1" role="gridcell" aria-label="B7" tabindex="0"></div>
+      <div class="square" data-row="6" data-col="2" role="gridcell" aria-label="C7" tabindex="0"></div>
+      <div class="square" data-row="6" data-col="3" role="gridcell" aria-label="D7" tabindex="0"></div>
+      <div class="square" data-row="6" data-col="4" role="gridcell" aria-label="E7" tabindex="0"></div>
+      <div class="square" data-row="6" data-col="5" role="gridcell" aria-label="F7" tabindex="0"></div>
+      <div class="square" data-row="6" data-col="6" role="gridcell" aria-label="G7" tabindex="0"></div>
+      <div class="square" data-row="6" data-col="7" role="gridcell" aria-label="H7" tabindex="0"></div>
       
       <!-- Row 8 -->
-      <div class="square" data-row="7" data-col="0"></div>
-      <div class="square" data-row="7" data-col="1"></div>
-      <div class="square" data-row="7" data-col="2"></div>
-      <div class="square" data-row="7" data-col="3"></div>
-      <div class="square" data-row="7" data-col="4"></div>
-      <div class="square" data-row="7" data-col="5"></div>
-      <div class="square" data-row="7" data-col="6"></div>
-      <div class="square" data-row="7" data-col="7"></div>
+      <div class="square" data-row="7" data-col="0" role="gridcell" aria-label="A8" tabindex="0"></div>
+      <div class="square" data-row="7" data-col="1" role="gridcell" aria-label="B8" tabindex="0"></div>
+      <div class="square" data-row="7" data-col="2" role="gridcell" aria-label="C8" tabindex="0"></div>
+      <div class="square" data-row="7" data-col="3" role="gridcell" aria-label="D8" tabindex="0"></div>
+      <div class="square" data-row="7" data-col="4" role="gridcell" aria-label="E8" tabindex="0"></div>
+      <div class="square" data-row="7" data-col="5" role="gridcell" aria-label="F8" tabindex="0"></div>
+      <div class="square" data-row="7" data-col="6" role="gridcell" aria-label="G8" tabindex="0"></div>
+      <div class="square" data-row="7" data-col="7" role="gridcell" aria-label="H8" tabindex="0"></div>
     </div>
     
     <div class="status-bar">
       <div class="player-score">
-        <div class="score-disc black"></div>
-        <span id="black-score">2</span>
+        <div class="score-disc black" aria-label="Black score"></div>
+        <span id="black-score" aria-live="polite">2</span>
       </div>
-      <div id="turn-indicator">Black's turn</div>
+      <div id="turn-indicator" aria-live="assertive">Black's turn</div>
       <div class="player-score">
-        <div class="score-disc white"></div>
-        <span id="white-score">2</span>
+        <div class="score-disc white" aria-label="White score"></div>
+        <span id="white-score" aria-live="polite">2</span>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- Game over modal dialog -->
-  <div id="game-over-modal" class="modal hidden">
+  <div id="game-over-modal" class="modal hidden" role="dialog" aria-labelledby="game-over-title" aria-modal="true">
     <div class="modal-content">
-      <h2>Game Over</h2>
+      <h2 id="game-over-title">Game Over</h2>
       <div class="final-score">
         <div class="player-score">
-          <div class="score-disc black"></div>
+          <div class="score-disc black" aria-label="Final black score"></div>
           <span id="final-black-score">0</span>
         </div>
         <div class="player-score">
-          <div class="score-disc white"></div>
+          <div class="score-disc white" aria-label="Final white score"></div>
           <span id="final-white-score">0</span>
         </div>
       </div>
-      <p id="winner-text">Black wins!</p>
+      <p id="winner-text" aria-live="polite">Black wins!</p>
       <button id="new-game-btn" class="wooden-btn">New Game</button>
     </div>
   </div>
 
-  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js" async></script>
-  <script src="./main.js" type="module" defer></script>
+  <!-- Structured data for SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Othello",
+    "alternateName": "Reversi",
+    "description": "Play the classic board game Othello online against friends or AI opponents of varying difficulty levels.",
+    "genre": "Board Game",
+    "gamePlatform": "Web Browser",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any",
+    "author": {
+      "@type": "Person",
+      "name": "Keshav Madhav"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+  </script>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <script src="./main.js" type="module"></script>
+  
+  <!-- Service worker registration for PWA support -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+          })
+          .catch(error => {
+            console.error('Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>

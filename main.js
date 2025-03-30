@@ -457,8 +457,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return bestMove;
   }
 
-  // Helper functions for the AI
-
   // Simulate a move without changing the actual board
   function simulateMove(boardState, row, col, player) {
     const newBoard = boardState.map(r => [...r]);

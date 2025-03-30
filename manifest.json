@@ -1,0 +1,27 @@
+{
+  "name": "Othello - Classic Strategy Board Game",
+  "short_name": "Othello",
+  "description": "Play Othello (Reversi) online with friends or against AI opponents of varying difficulty levels.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1b5e20",
+  "theme_color": "#1b5e20",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment", "board games"],
+  "lang": "en-US",
+  "prefer_related_applications": false
+}
