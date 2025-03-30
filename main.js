@@ -21,7 +21,20 @@ document.addEventListener("DOMContentLoaded", () => {
               square.appendChild(disc);
           }
       });
+
+      updateStatusBar(currentPlayer);
   }
+
+  function updateStatusBar(currentPlayer) {
+    const blackCount = document.querySelectorAll('.disc.black').length;
+    const whiteCount = document.querySelectorAll('.disc.white').length;
+
+    document.getElementById('black-score').textContent = blackCount;
+    document.getElementById('white-score').textContent = whiteCount;
+
+    document.getElementById('turn-indicator').textContent = currentPlayer === 0 ? "Black's turn" : "White's turn";
+}
+
 
   function isValidMove(row, col, player) {
       if (board[row][col] !== null) return false;
@@ -97,9 +110,31 @@ document.addEventListener("DOMContentLoaded", () => {
           }
       }
       
+      renderBoard();
+      switchTurn();
+  }
+
+  function switchTurn() {
       currentPlayer = 1 - currentPlayer;
+      let validMoves = getValidMoves(currentPlayer);
+      
+      if (validMoves.length === 0) {
+          currentPlayer = 1 - currentPlayer;
+          validMoves = getValidMoves(currentPlayer);
+          
+          if (validMoves.length === 0) {
+              endGame();
+              return;
+          }
+      }
+      
       renderBoard();
       highlightValidMoves();
+      updateStatusBar(currentPlayer);
+  }
+
+  function endGame() {
+      alert("Game over! No more valid moves.");
   }
 
   document.querySelectorAll(".square").forEach(square => {
