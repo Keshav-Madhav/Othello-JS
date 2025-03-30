@@ -456,7 +456,7 @@ body {
 
 .square:hover {
   background: linear-gradient(135deg, #419e2e, #237219);
-  transform: translateZ(4px);
+  transform: translateZ(6px);
   box-shadow: 
     inset 0 0 8px rgba(0, 0, 0, 0.3),
     inset 0 2px 3px rgba(255, 255, 255, 0.3),

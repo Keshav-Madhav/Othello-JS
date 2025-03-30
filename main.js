@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Connection panel elements
   const createGameBtn = document.getElementById('create-game-btn');
   const joinGameBtn = document.getElementById('join-game-btn');
+  const aiControls = document.getElementById('ai-controls');
   const playComputerEasy = document.getElementById('play-computer-easy');
   const playComputerMedium = document.getElementById('play-computer-medium');
   const playComputerHard = document.getElementById('play-computer-hard');
@@ -92,6 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Creating game...");
     createGameBtn.disabled = true;
     joinGameBtn.disabled = true;
+    aiControls.classList.add('hidden');
     updateStatus("Creating game...");
     
     try {
@@ -147,6 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleJoinGame() {
     createGameBtn.disabled = true;
     joinGameBtn.disabled = true;
+    aiControls.classList.add('hidden');
     joinRoomContainer.classList.remove('hidden');
   }
 
@@ -510,6 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
     joinRoomContainer.classList.add('hidden');
     createGameBtn.disabled = false;
     joinGameBtn.disabled = false;
+    aiControls.classList.remove('hidden');
     playComputerEasy.disabled = false;
     playComputerMedium.disabled = false;
     playComputerHard.disabled = false;
