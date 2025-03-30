@@ -1,150 +1,314 @@
+import { GameConnection } from "./Gameconnection.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-  const boardSize = 8;
-  let board = Array.from({ length: boardSize }, () => Array(boardSize).fill(null));
-  let currentPlayer = 0; // 0 for Black, 1 for White
+  const BOARD_SIZE = 8;
+  const PLAYER = {
+    BLACK: 0,
+    WHITE: 1
+  };
+  
+  let board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(null));
+  let currentPlayer = PLAYER.BLACK;
+  let gameConnection = null;
+  let localPlayer = null;
+  let isConnected = false;
 
-  // Initial setup
-  board[3][3] = 1;
-  board[3][4] = 0;
-  board[4][3] = 0;
-  board[4][4] = 1;
+  // Cache DOM elements
+  const gameContainer = document.querySelector('.game-container');
+  const squares = document.querySelectorAll('.square');
+  const blackScoreElement = document.getElementById('black-score');
+  const whiteScoreElement = document.getElementById('white-score');
+  const turnIndicatorElement = document.getElementById('turn-indicator');
 
-  function renderBoard() {
-      document.querySelectorAll(".square").forEach(square => {
-          square.innerHTML = "";
-          const row = parseInt(square.dataset.row);
-          const col = parseInt(square.dataset.col);
-          
-          if (board[row][col] !== null) {
-              const disc = document.createElement("div");
-              disc.classList.add("disc", board[row][col] === 0 ? "black" : "white");
-              square.appendChild(disc);
-          }
-      });
+  const menu = createGameMenu();
+  document.body.insertBefore(menu, gameContainer);
 
-      updateStatusBar(currentPlayer);
+  initializeBoardFromDOM();
+  setupEventListeners();
+
+  function createGameMenu() {
+    const menu = document.createElement('div');
+    menu.style.margin = '20px';
+    
+    const createBtn = document.createElement('button');
+    createBtn.textContent = 'Create Game';
+    createBtn.style.marginRight = '10px';
+    
+    const joinBtn = document.createElement('button');
+    joinBtn.textContent = 'Join Game';
+    
+    menu.appendChild(createBtn);
+    menu.appendChild(joinBtn);
+    
+    createBtn.addEventListener('click', handleCreateGame);
+    joinBtn.addEventListener('click', handleJoinGame);
+    
+    return menu;
   }
 
-  function updateStatusBar(currentPlayer) {
+  function initializeBoardFromDOM() {
+    squares.forEach(square => {
+      const row = parseInt(square.dataset.row);
+      const col = parseInt(square.dataset.col);
+      const disc = square.querySelector('.disc');
+      
+      if (disc) {
+        board[row][col] = disc.classList.contains('black') ? PLAYER.BLACK : PLAYER.WHITE;
+      }
+    });
+  }
+
+  /**
+   * Set up event listeners for game squares
+   */
+  function setupEventListeners() {
+    squares.forEach(square => {
+      square.addEventListener('click', () => {
+        const row = parseInt(square.dataset.row);
+        const col = parseInt(square.dataset.col);
+        handleMoveAttempt(row, col);
+      });
+    });
+  }
+
+  async function handleCreateGame() {
+    try {
+      gameConnection = new GameConnection();
+      await gameConnection.initialize();
+      const roomId = await gameConnection.createRoom();
+      localPlayer = PLAYER.BLACK;
+      
+      alert(`Room created! Share this ID with your opponent: ${roomId}`);
+      
+      gameConnection.onOpponentConnected = () => {
+        isConnected = true;
+        menu.style.display = 'none';
+        gameConnection.sendData({ type: 'init', board, currentPlayer });
+        renderBoard();
+        highlightValidMoves();
+      };
+
+      gameConnection.onDataReceived = handleNetworkData;
+    } catch (error) {
+      alert('Error creating room: ' + error.message);
+    }
+  }
+
+  async function handleJoinGame() {
+    const roomId = prompt('Enter room ID:');
+    if (!roomId) return;
+
+    try {
+      gameConnection = new GameConnection();
+      await gameConnection.initialize();
+      await gameConnection.joinRoom(roomId);
+      
+      localPlayer = PLAYER.WHITE;
+      isConnected = true;
+      menu.style.display = 'none';
+      
+      gameConnection.onDataReceived = handleNetworkData;
+      alert('Joined room. Waiting for game start...');
+    } catch (error) {
+      alert('Error joining room: ' + error.message);
+    }
+  }
+
+  function handleNetworkData(data) {
+    switch(data.type) {
+      case 'init':
+      case 'move':
+        board = data.board;
+        currentPlayer = data.currentPlayer;
+        renderBoard();
+        checkTurn();
+        break;
+    }
+  }
+
+  function handleMoveAttempt(row, col) {
+    if (!isConnected) {
+      alert('Not connected to opponent!');
+      return;
+    }
+    
+    if (currentPlayer !== localPlayer) {
+      return;
+    }
+
+    if (isValidMove(row, col, currentPlayer)) {
+      makeMove(row, col);
+      gameConnection.sendData({ type: 'move', board, currentPlayer });
+    }
+  }
+
+  function checkTurn() {
+    if (checkGameOver()) return;
+    
+    if (currentPlayer === localPlayer) {
+      highlightValidMoves();
+    } else {
+      clearValidMoveHighlights();
+    }
+    
+    updateStatusBar();
+  }
+
+  function clearValidMoveHighlights() {
+    document.querySelectorAll('.square').forEach(s => 
+      s.classList.remove('valid-move')
+    );
+  }
+
+  function checkGameOver() {
+    const blackMoves = getValidMoves(PLAYER.BLACK).length;
+    const whiteMoves = getValidMoves(PLAYER.WHITE).length;
+    
+    if (blackMoves === 0 && whiteMoves === 0) {
+      endGame();
+      return true;
+    }
+    
+    return false;
+  }
+
+  function renderBoard() {
+    squares.forEach(square => {
+      square.innerHTML = "";
+      const row = parseInt(square.dataset.row);
+      const col = parseInt(square.dataset.col);
+      
+      if (board[row][col] !== null) {
+        const disc = document.createElement("div");
+        disc.className = `disc ${board[row][col] === PLAYER.BLACK ? 'black' : 'white'}`;
+        square.appendChild(disc);
+      }
+    });
+
+    updateStatusBar();
+  }
+
+  function updateStatusBar() {
     const blackCount = document.querySelectorAll('.disc.black').length;
     const whiteCount = document.querySelectorAll('.disc.white').length;
 
-    document.getElementById('black-score').textContent = blackCount;
-    document.getElementById('white-score').textContent = whiteCount;
-
-    document.getElementById('turn-indicator').textContent = currentPlayer === 0 ? "Black's turn" : "White's turn";
-}
-
+    blackScoreElement.textContent = blackCount;
+    whiteScoreElement.textContent = whiteCount;
+    turnIndicatorElement.textContent = 
+      currentPlayer === PLAYER.BLACK ? "Black's turn" : "White's turn";
+  }
 
   function isValidMove(row, col, player) {
-      if (board[row][col] !== null) return false;
-      let valid = false;
+    if (board[row][col] !== null) return false;
+    
+    const directions = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1],  [1, 0],  [1, 1]
+    ];
+    
+    return directions.some(([dx, dy]) => {
+      let r = row + dx;
+      let c = col + dy;
+      let hasOpponentDisc = false;
       
-      const directions = [
-          [-1, -1], [-1, 0], [-1, 1],
-          [0, -1],         [0, 1],
-          [1, -1], [1, 0], [1, 1]
-      ];
-      
-      for (const [dx, dy] of directions) {
-          let r = row + dx;
-          let c = col + dy;
-          let flipped = false;
-          
-          while (r >= 0 && r < boardSize && c >= 0 && c < boardSize && board[r][c] !== null && board[r][c] !== player) {
-              r += dx;
-              c += dy;
-              flipped = true;
-          }
-          
-          if (flipped && r >= 0 && r < boardSize && c >= 0 && c < boardSize && board[r][c] === player) {
-              valid = true;
-          }
+      // Look for opponent's discs in this direction
+      while (isInBounds(r, c) && board[r][c] !== null && board[r][c] !== player) {
+        hasOpponentDisc = true;
+        r += dx;
+        c += dy;
       }
-      return valid;
+      
+      return hasOpponentDisc && isInBounds(r, c) && board[r][c] === player;
+    });
+  }
+
+  function isInBounds(row, col) {
+    return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
   }
 
   function getValidMoves(player) {
-      let validMoves = [];
-      for (let row = 0; row < boardSize; row++) {
-          for (let col = 0; col < boardSize; col++) {
-              if (isValidMove(row, col, player)) {
-                  validMoves.push([row, col]);
-              }
-          }
+    const validMoves = [];
+    
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        if (isValidMove(row, col, player)) {
+          validMoves.push([row, col]);
+        }
       }
-      return validMoves;
+    }
+    
+    return validMoves;
   }
 
   function highlightValidMoves() {
-      document.querySelectorAll(".square").forEach(square => square.classList.remove("valid-move"));
-      getValidMoves(currentPlayer).forEach(([row, col]) => {
-          document.querySelector(`.square[data-row='${row}'][data-col='${col}']`).classList.add("valid-move");
-      });
+    clearValidMoveHighlights();
+    
+    getValidMoves(currentPlayer).forEach(([row, col]) => {
+      document.querySelector(`.square[data-row='${row}'][data-col='${col}']`)
+        .classList.add("valid-move");
+    });
   }
 
   function makeMove(row, col) {
-      if (!isValidMove(row, col, currentPlayer)) return;
+    board[row][col] = currentPlayer;
+    
+    const directions = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1],  [1, 0],  [1, 1]
+    ];
+    
+    for (const [dx, dy] of directions) {
+      let r = row + dx;
+      let c = col + dy;
+      let discsToFlip = [];
       
-      board[row][col] = currentPlayer;
-      
-      const directions = [
-          [-1, -1], [-1, 0], [-1, 1],
-          [0, -1],         [0, 1],
-          [1, -1], [1, 0], [1, 1]
-      ];
-      
-      for (const [dx, dy] of directions) {
-          let r = row + dx;
-          let c = col + dy;
-          let path = [];
-          
-          while (r >= 0 && r < boardSize && c >= 0 && c < boardSize && board[r][c] !== null && board[r][c] !== currentPlayer) {
-              path.push([r, c]);
-              r += dx;
-              c += dy;
-          }
-          
-          if (r >= 0 && r < boardSize && c >= 0 && c < boardSize && board[r][c] === currentPlayer) {
-              path.forEach(([pr, pc]) => board[pr][pc] = currentPlayer);
-          }
+      while (isInBounds(r, c) && board[r][c] !== null && board[r][c] !== currentPlayer) {
+        discsToFlip.push([r, c]);
+        r += dx;
+        c += dy;
       }
       
-      renderBoard();
-      switchTurn();
+      if (isInBounds(r, c) && board[r][c] === currentPlayer) {
+        discsToFlip.forEach(([flipRow, flipCol]) => {
+          board[flipRow][flipCol] = currentPlayer;
+        });
+      }
+    }
+    
+    switchTurn();
+    renderBoard();
   }
 
   function switchTurn() {
+    currentPlayer = 1 - currentPlayer;
+    let validMoves = getValidMoves(currentPlayer);
+    
+    if (validMoves.length === 0) {
       currentPlayer = 1 - currentPlayer;
-      let validMoves = getValidMoves(currentPlayer);
+      validMoves = getValidMoves(currentPlayer);
       
       if (validMoves.length === 0) {
-          currentPlayer = 1 - currentPlayer;
-          validMoves = getValidMoves(currentPlayer);
-          
-          if (validMoves.length === 0) {
-              endGame();
-              return;
-          }
+        endGame();
       }
-      
-      renderBoard();
-      highlightValidMoves();
-      updateStatusBar(currentPlayer);
+    }
   }
 
   function endGame() {
-      alert("Game over! No more valid moves.");
+    const blackCount = document.querySelectorAll('.disc.black').length;
+    const whiteCount = document.querySelectorAll('.disc.white').length;
+    
+    let message = `Game Over!\nBlack: ${blackCount}, White: ${whiteCount}\n`;
+    
+    if (blackCount > whiteCount) {
+      message += "Black wins!";
+    } else if (whiteCount > blackCount) {
+      message += "White wins!";
+    } else {
+      message += "It's a tie!";
+    }
+    
+    alert(message);
   }
-
-  document.querySelectorAll(".square").forEach(square => {
-      square.addEventListener("click", () => {
-          const row = parseInt(square.dataset.row);
-          const col = parseInt(square.dataset.col);
-          makeMove(row, col);
-      });
-  });
-
-  renderBoard();
-  highlightValidMoves();
 });
