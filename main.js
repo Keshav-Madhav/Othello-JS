@@ -15,6 +15,17 @@ document.addEventListener("DOMContentLoaded", () => {
   let isComputerGame = false;
   let computerDifficulty = 1; // 1: easy, 2: medium, 3: hard
 
+  const POSITION_WEIGHTS = [
+    [100, -20, 10, 5, 5, 10, -20, 100],
+    [-20, -50, -2, -2, -2, -2, -50, -20],
+    [10, -2, 1, 1, 1, 1, -2, 10],
+    [5, -2, 1, 1, 1, 1, -2, 5],
+    [5, -2, 1, 1, 1, 1, -2, 5],
+    [10, -2, 1, 1, 1, 1, -2, 10],
+    [-20, -50, -2, -2, -2, -2, -50, -20],
+    [100, -20, 10, 5, 5, 10, -20, 100]
+  ];
+
   // Cache DOM elements
   const squares = document.querySelectorAll('.square');
   const blackScoreElement = document.getElementById('black-score');
@@ -243,45 +254,216 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Simple AI - choose random move for easy difficulty
     let chosenMove;
+    
     if (computerDifficulty === 1) {
-      // Easy - random move
-      chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-    } else if (computerDifficulty === 2) {
-      // Medium - prefers corners and edges
-      const cornerMoves = validMoves.filter(([r, c]) => 
-        (r === 0 || r === 7) && (c === 0 || c === 7)
-      );
-      const edgeMoves = validMoves.filter(([r, c]) => 
-        (r === 0 || r === 7 || c === 0 || c === 7) && 
-        !cornerMoves.some(([cr, cc]) => cr === r && cc === c)
+      // Easy - random move with slight preference for non-edge moves
+      const innerMoves = validMoves.filter(([r, c]) => 
+        r > 0 && r < 7 && c > 0 && c < 7
       );
       
-      if (cornerMoves.length > 0) {
-        chosenMove = cornerMoves[Math.floor(Math.random() * cornerMoves.length)];
-      } else if (edgeMoves.length > 0) {
-        chosenMove = edgeMoves[Math.floor(Math.random() * edgeMoves.length)];
+      if (innerMoves.length > 0 && Math.random() > 0.3) {
+        chosenMove = innerMoves[Math.floor(Math.random() * innerMoves.length)];
       } else {
         chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
       }
-    } else {
-      // Hard - chooses move that flips the most discs
-      let maxFlips = -1;
-      for (const move of validMoves) {
-        const flips = countFlips(move[0], move[1], currentPlayer);
-        if (flips > maxFlips) {
-          maxFlips = flips;
-          chosenMove = move;
+    } 
+    else if (computerDifficulty === 2) {
+      // Medium - strategic position preference with some randomization
+      const weightedMoves = validMoves.map(move => {
+        const [row, col] = move;
+        let weight = 1;
+        
+        // Prefer corners strongly
+        if ((row === 0 || row === 7) && (col === 0 || col === 7)) {
+          weight += 10;
         }
-      }
+        // Avoid squares adjacent to corners if corner is empty
+        else if ((row <= 1 && col <= 1 && board[0][0] === null) ||
+                (row <= 1 && col >= 6 && board[0][7] === null) ||
+                (row >= 6 && col <= 1 && board[7][0] === null) ||
+                (row >= 6 && col >= 6 && board[7][7] === null)) {
+          weight -= 5;
+        }
+        // Prefer edges, but not those adjacent to empty corners
+        else if (row === 0 || row === 7 || col === 0 || col === 7) {
+          // Check if this edge piece is adjacent to an empty corner
+          const isAdjacentToEmptyCorner = 
+            (row === 0 && col === 1 && board[0][0] === null) ||
+            (row === 0 && col === 6 && board[0][7] === null) ||
+            (row === 1 && col === 0 && board[0][0] === null) ||
+            (row === 1 && col === 7 && board[0][7] === null) ||
+            (row === 6 && col === 0 && board[7][0] === null) ||
+            (row === 6 && col === 7 && board[7][7] === null) ||
+            (row === 7 && col === 1 && board[7][0] === null) ||
+            (row === 7 && col === 6 && board[7][7] === null);
+            
+          if (!isAdjacentToEmptyCorner) {
+            weight += 3;
+          }
+        }
+        
+        // Add some randomness
+        weight += Math.random() * 0.5;
+        
+        return { move, weight };
+      });
+      
+      // Sort by weight and pick the highest
+      weightedMoves.sort((a, b) => b.weight - a.weight);
+      chosenMove = weightedMoves[0].move;
+    } 
+    else {
+      // Hard - advanced positional strategy with board evaluation
+      chosenMove = findBestMove(validMoves, 3); // Depth 3 minimax search
     }
 
     makeMove(chosenMove[0], chosenMove[1]);
   }
 
-  function countFlips(row, col, player) {
-    let totalFlips = 0;
+  function evaluateBoard(boardState, player) {
+    let score = 0;
+    const opponent = 1 - player;
+    
+    // Count pieces and evaluate positional advantage
+    let playerCount = 0;
+    let opponentCount = 0;
+    let playerMobility = 0;
+    let opponentMobility = 0;
+    let playerPositionalScore = 0;
+    let opponentPositionalScore = 0;
+    
+    // Clone the board for simulation
+    const simulatedBoard = boardState.map(row => [...row]);
+    
+    // Evaluate position scores and count pieces
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        if (simulatedBoard[row][col] === player) {
+          playerCount++;
+          playerPositionalScore += POSITION_WEIGHTS[row][col];
+        } else if (simulatedBoard[row][col] === opponent) {
+          opponentCount++;
+          opponentPositionalScore += POSITION_WEIGHTS[row][col];
+        }
+      }
+    }
+    
+    // Calculate mobility (number of valid moves)
+    playerMobility = getValidMovesForBoardState(simulatedBoard, player).length;
+    opponentMobility = getValidMovesForBoardState(simulatedBoard, opponent).length;
+    
+    // Early game: focus on mobility and position
+    if (playerCount + opponentCount < 20) {
+      score = (playerPositionalScore - opponentPositionalScore) * 3 + 
+              (playerMobility - opponentMobility) * 10;
+    }
+    // Mid game: balance between position, mobility and disc count
+    else if (playerCount + opponentCount < 40) {
+      score = (playerPositionalScore - opponentPositionalScore) * 2 + 
+              (playerMobility - opponentMobility) * 5 +
+              (playerCount - opponentCount) * 1;
+    }
+    // End game: focus on disc count with position still important
+    else {
+      score = (playerPositionalScore - opponentPositionalScore) * 1 + 
+              (playerCount - opponentCount) * 3;
+    }
+    
+    // Corner control is always critical
+    const corners = [
+      [0, 0], [0, 7], [7, 0], [7, 7]
+    ];
+    
+    for (const [row, col] of corners) {
+      if (simulatedBoard[row][col] === player) {
+        score += 25;
+      } else if (simulatedBoard[row][col] === opponent) {
+        score -= 25;
+      }
+    }
+    
+    return score;
+  }
+
+  // Minimax algorithm with alpha-beta pruning for hard AI
+  function minimax(boardState, depth, alpha, beta, maximizingPlayer, currentPlayerInSim) {
+    // Base case: terminal node or depth limit reached
+    if (depth === 0) {
+      return evaluateBoard(boardState, currentPlayer);
+    }
+    
+    const validMoves = getValidMovesForBoardState(boardState, currentPlayerInSim);
+    
+    // If no valid moves, pass turn to opponent
+    if (validMoves.length === 0) {
+      const nextPlayer = 1 - currentPlayerInSim;
+      const nextValidMoves = getValidMovesForBoardState(boardState, nextPlayer);
+      
+      // If opponent also has no moves, game is over
+      if (nextValidMoves.length === 0) {
+        // Return final score
+        const playerCount = countDiscsOnBoard(boardState, currentPlayer);
+        const opponentCount = countDiscsOnBoard(boardState, 1 - currentPlayer);
+        return playerCount > opponentCount ? 1000 : (playerCount < opponentCount ? -1000 : 0);
+      }
+      
+      // Pass turn and continue minimax
+      return minimax(boardState, depth - 1, alpha, beta, !maximizingPlayer, nextPlayer);
+    }
+    
+    if (maximizingPlayer) {
+      let maxEval = -Infinity;
+      for (const [row, col] of validMoves) {
+        // Simulate move
+        const newBoard = simulateMove(boardState, row, col, currentPlayerInSim);
+        const evaluation = minimax(newBoard, depth - 1, alpha, beta, false, 1 - currentPlayerInSim);
+        maxEval = Math.max(maxEval, evaluation);
+        alpha = Math.max(alpha, evaluation);
+        if (beta <= alpha) break; // Alpha-beta pruning
+      }
+      return maxEval;
+    } else {
+      let minEval = Infinity;
+      for (const [row, col] of validMoves) {
+        // Simulate move
+        const newBoard = simulateMove(boardState, row, col, currentPlayerInSim);
+        const evaluation = minimax(newBoard, depth - 1, alpha, beta, true, 1 - currentPlayerInSim);
+        minEval = Math.min(minEval, evaluation);
+        beta = Math.min(beta, evaluation);
+        if (beta <= alpha) break; // Alpha-beta pruning
+      }
+      return minEval;
+    }
+  }
+
+  // Function to find the best move using minimax
+  function findBestMove(validMoves, depth) {
+    let bestScore = -Infinity;
+    let bestMove = validMoves[0];
+    
+    for (const [row, col] of validMoves) {
+      // Simulate this move
+      const simulatedBoard = simulateMove([...board.map(row => [...row])], row, col, currentPlayer);
+      // Evaluate with minimax
+      const score = minimax(simulatedBoard, depth - 1, -Infinity, Infinity, false, 1 - currentPlayer);
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = [row, col];
+      }
+    }
+    
+    return bestMove;
+  }
+
+  // Helper functions for the AI
+
+  // Simulate a move without changing the actual board
+  function simulateMove(boardState, row, col, player) {
+    const newBoard = boardState.map(r => [...r]);
+    newBoard[row][col] = player;
+    
     const directions = [
       [-1, -1], [-1, 0], [-1, 1],
       [0, -1],           [0, 1],
@@ -293,18 +475,72 @@ document.addEventListener("DOMContentLoaded", () => {
       let c = col + dy;
       let discsToFlip = [];
       
-      while (isInBounds(r, c) && board[r][c] !== null && board[r][c] !== player) {
+      while (isInBounds(r, c) && newBoard[r][c] !== null && newBoard[r][c] !== player) {
         discsToFlip.push([r, c]);
         r += dx;
         c += dy;
       }
       
-      if (isInBounds(r, c) && board[r][c] === player) {
-        totalFlips += discsToFlip.length;
+      if (isInBounds(r, c) && newBoard[r][c] === player) {
+        discsToFlip.forEach(([flipRow, flipCol]) => {
+          newBoard[flipRow][flipCol] = player;
+        });
       }
     }
     
-    return totalFlips;
+    return newBoard;
+  }
+
+  // Get valid moves for a board state without affecting the game
+  function getValidMovesForBoardState(boardState, player) {
+    const validMoves = [];
+    
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        if (isValidMoveOnBoard(boardState, row, col, player)) {
+          validMoves.push([row, col]);
+        }
+      }
+    }
+    
+    return validMoves;
+  }
+
+  // Check if a move is valid on a given board state
+  function isValidMoveOnBoard(boardState, row, col, player) {
+    if (boardState[row][col] !== null) return false;
+    
+    const directions = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1],  [1, 0],  [1, 1]
+    ];
+    
+    return directions.some(([dx, dy]) => {
+      let r = row + dx;
+      let c = col + dy;
+      let hasOpponentDisc = false;
+      
+      while (isInBounds(r, c) && boardState[r][c] !== null && boardState[r][c] !== player) {
+        hasOpponentDisc = true;
+        r += dx;
+        c += dy;
+      }
+      
+      return hasOpponentDisc && isInBounds(r, c) && boardState[r][c] === player;
+    });
+  }
+
+  function countDiscsOnBoard(boardState, player) {
+    let count = 0;
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        if (boardState[row][col] === player) {
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   function checkTurn() {
