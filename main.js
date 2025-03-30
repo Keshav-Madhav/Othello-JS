@@ -1,4 +1,4 @@
-import { GameConnection } from "./Gameconnection.js";
+import { GameConnection } from "./GameConnection.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const BOARD_SIZE = 8;
