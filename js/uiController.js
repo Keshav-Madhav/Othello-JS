@@ -89,8 +89,42 @@ export class UIController {
     });
   }
 
+  highlightFlippedSquares(flippedSquares) {
+    this.clearFlipHighlights();
+    
+    flippedSquares.forEach(([row, col]) => {
+      const square = document.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
+      if (square) {
+        square.classList.add('has-flipped');
+      }
+    });
+  }
+
+  highlightPreviousMove(row, col) {
+    this.clearPreviousMoveHighlight();
+    
+    const square = document.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
+    if (square) {
+      square.classList.add('prev-move');
+    }
+  }
+
   clearValidMoveHighlights() {
-    this.squares.forEach(s => s.classList.remove('valid-move'));
+    this.squares.forEach(square => {
+      square.classList.remove("valid-move");
+    });
+  }
+
+  clearFlipHighlights() {
+    document.querySelectorAll('.has-flipped').forEach(el => {
+      el.classList.remove('has-flipped');
+    });
+  }
+
+  clearPreviousMoveHighlight() {
+    document.querySelectorAll('.prev-move').forEach(el => {
+      el.classList.remove('prev-move');
+    });
   }
 
   showGameOver(blackCount, whiteCount) {

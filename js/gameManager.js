@@ -67,7 +67,10 @@ export class GameManager {
         this.isConnected = true;
         this.ui.connectionPanel.classList.add('hidden');
         this.ui.showPlayerColor(this.localPlayer);
-        this.gameConnection.sendData({ type: 'init', board: this.board.getBoardState(), currentPlayer: this.currentPlayer });
+        this.gameConnection.sendData({ 
+          type: 'init', 
+          currentPlayer: this.currentPlayer 
+        });
         this.updateGameView();
         this.ui.updateStatus("Opponent connected! Game started.");
       };
@@ -143,11 +146,22 @@ export class GameManager {
   handleNetworkData(data) {
     switch(data.type) {
       case 'init':
-      case 'move':
-        this.board.setBoardState(data.board);
         this.currentPlayer = data.currentPlayer;
         this.updateGameView();
         break;
+      case 'move':
+        this.processReceivedMove(data.row, data.col, data.flippedSquares);
+        break;
+    }
+  }
+
+  processReceivedMove(row, col, flippedSquares) {
+    if (this.board.isValidMove(row, col, this.currentPlayer)) {
+      this.board.makeMove(row, col, this.currentPlayer, flippedSquares);
+      this.ui.highlightFlippedSquares(flippedSquares);
+      this.ui.highlightPreviousMove(row, col);
+      this.switchTurn();
+      this.updateGameView();
     }
   }
 
@@ -162,7 +176,12 @@ export class GameManager {
     }
 
     if (this.board.isValidMove(row, col, this.currentPlayer)) {
-      this.makeMove(row, col);
+      const moveResult = this.board.makeMove(row, col, this.currentPlayer);
+      
+      this.ui.highlightFlippedSquares(moveResult.flippedSquares);
+      this.ui.highlightPreviousMove(row, col);
+      this.switchTurn();
+      this.updateGameView();
       
       if (this.isComputerGame) {
         setTimeout(() => {
@@ -172,9 +191,11 @@ export class GameManager {
         }, Math.floor(Math.random() * 600) + 200);
       } else {
         this.gameConnection.sendData({ 
-          type: 'move', 
-          board: this.board.getBoardState(), 
-          currentPlayer: this.currentPlayer 
+          type: 'move',
+          row: row,
+          col: col,
+          flippedSquares: moveResult.flippedSquares,
+          currentPlayer: this.currentPlayer
         });
       }
     }
@@ -183,16 +204,16 @@ export class GameManager {
   makeComputerMove() {
     const move = this.ai.getMove(this.board.getBoardState(), this.currentPlayer);
     if (move) {
-      this.makeMove(move[0], move[1]);
+      const [row, col] = move;
+      const moveResult = this.board.makeMove(row, col, this.currentPlayer);
+      
+      this.ui.highlightFlippedSquares(moveResult.flippedSquares);
+      this.ui.highlightPreviousMove(row, col);
+      this.switchTurn();
+      this.updateGameView();
     } else {
       this.switchTurn();
     }
-  }
-
-  makeMove(row, col) {
-    this.board.makeMove(row, col, this.currentPlayer);
-    this.switchTurn();
-    this.updateGameView();
   }
 
   switchTurn() {

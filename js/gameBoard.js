@@ -57,6 +57,7 @@ export class GameBoard {
   }
 
   makeMove(row, col, player) {
+    const flippedSquares = [];
     this.board[row][col] = player;
     
     const directions = [
@@ -68,20 +69,26 @@ export class GameBoard {
     for (const [dx, dy] of directions) {
       let r = row + dx;
       let c = col + dy;
-      let discsToFlip = [];
+      let currentFlip = [];
       
       while (this.isInBounds(r, c) && this.board[r][c] !== null && this.board[r][c] !== player) {
-        discsToFlip.push([r, c]);
+        currentFlip.push([r, c]);
         r += dx;
         c += dy;
       }
       
       if (this.isInBounds(r, c) && this.board[r][c] === player) {
-        discsToFlip.forEach(([flipRow, flipCol]) => {
+        flippedSquares.push(...currentFlip);
+        currentFlip.forEach(([flipRow, flipCol]) => {
           this.board[flipRow][flipCol] = player;
         });
       }
     }
+    
+    return {
+      flippedSquares,
+      lastMove: [row, col]
+    };
   }
 
   countDiscs(player) {
